@@ -1,6 +1,7 @@
 from helper import crear_muebles,generar_rango_cruza,llenar_resultado,arr_numeros
 import random
 import matplotlib.pyplot as plt
+import numpy as np
 
 class AlgoritmoGenetico:
     def __init__(self, muebles,n_individuos, tamanio_poblacion,horas_trabajo,n_generaciones,prob_mutacion,n_mutaciones,prob_mutacion_gen):
@@ -56,7 +57,7 @@ class AlgoritmoGenetico:
                 self.poblacion.append(indiv)
             self.ordenar_poblacion_por_aptitud()
             # Poda hasta tener el numero de individuos iniciales
-            # self.graficar_individuos(aux+1)
+            self.graficar_individuos(aux+1)
             self.poda()
             self.mejor_individuo.append(self.poblacion[0])
             self.media_individuo.append(self.poblacion[round(self.tamanio_poblacion/2)])
@@ -146,6 +147,21 @@ class AlgoritmoGenetico:
         data= self.calcular_data(individuo_data)
         individuo = data
         return individuo
+    def graficar_individuos(self,n_generacion):
+        fig,aux=plt.subplots()
+        arr_x=[]
+        arr_y=[]
+        for index,individuo in enumerate(self.poblacion):
+            arr_x.append(index+1)
+            arr_y.append(individuo['aptitud'])
+        plt.stem(arr_x,arr_y,label='Aptitud')
+        aux.set_title(f'Individuos en generacion: {n_generacion}',fontdict={'fontsize':20,'fontweight':'bold'})
+        aux.set_xlabel('Individuo',fontdict={'fontsize':15,'fontweight':'bold', 'color':'tab:red'})
+        aux.set_ylabel('Aptitud',fontdict={'fontsize':15,'fontweight':'bold', 'color':'tab:blue'})
+        aux.legend(loc='upper right',prop={'size':10})
+        # plt.grid()
+        plt.savefig(f'./images/generacion_{self.generacion}')
+        plt.close()
 def generar_grafica(algoritmo):
     list_epocas = []
     list_mejores_aptitud = []
