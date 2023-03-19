@@ -1,5 +1,7 @@
 from helper import crear_muebles,generar_rango_cruza,llenar_resultado,arr_numeros
 import random
+import matplotlib.pyplot as plt
+
 class AlgoritmoGenetico:
     def __init__(self, muebles,n_individuos, tamanio_poblacion,horas_trabajo,n_generaciones,prob_mutacion,n_mutaciones,prob_mutacion_gen):
         self.tamanio_poblacion = tamanio_poblacion
@@ -17,7 +19,7 @@ class AlgoritmoGenetico:
         self.cant_genes=arr_numeros(self.n_individuos)
         self.penalizacion=100
         self.primera_genetica()
-        print(*self.poblacion,sep='\n')
+        self.bucle_algoritmo()
     def primera_genetica(self):
         individuo_aux=[]
         for mueble in self.muebles:
@@ -46,15 +48,15 @@ class AlgoritmoGenetico:
             self.mutacion(poblacion_nueva)
 
             # Se calcula la aptitud para cada individuo y se agrega id
+            poblacion_aptitud=[]
             for indiv in poblacion_nueva:
-                self.agregar_aptitud_a_individuo(indiv)
-
+                poblacion_aptitud.append(self.agregar_aptitud(indiv))
             # Se insertan los nuevos en la población general
-            for indiv in poblacion_nueva:
+            for indiv in poblacion_aptitud:
                 self.poblacion.append(indiv)
             self.ordenar_poblacion_por_aptitud()
             # Poda hasta tener el numero de individuos iniciales
-            self.graficar_individuos(aux+1)
+            # self.graficar_individuos(aux+1)
             self.poda()
             self.mejor_individuo.append(self.poblacion[0])
             self.media_individuo.append(self.poblacion[round(self.tamanio_poblacion/2)])
@@ -114,9 +116,14 @@ class AlgoritmoGenetico:
                     band = True
                 else:
                     aux_indv2 += 1
-
-        individuo = self.crear_individuo_sin_coordenadas(resultado)
+        individuo = self.crear_data(resultado)
         return individuo
+    def agregar_aptitud(self, individuo):
+        return self.calcular_data(individuo.get('data'))
+    def ordenar_poblacion_por_aptitud(self):
+        self.poblacion.sort(key=lambda aptitud: aptitud['aptitud'], reverse=True)
+    def crear_data(self, data):
+        return {'data':data}
     def calcular_data(self, data):
         horas=0
         aux=0
@@ -139,11 +146,31 @@ class AlgoritmoGenetico:
         data= self.calcular_data(individuo_data)
         individuo = data
         return individuo
-
+def generar_grafica(algoritmo):
+    list_epocas = []
+    list_mejores_aptitud = []
+    list_peores_aptitud = []
+    list_media_aptitud=[]
+    for x in algoritmo.media_individuo:
+        list_media_aptitud.append(x.get('aptitud'))
+    for k in algoritmo.mejor_individuo:
+        list_mejores_aptitud.append(k.get('aptitud'))
+    for j in algoritmo.peor_individuo:
+        list_peores_aptitud.append(j.get('aptitud'))
+    for i in range(algoritmo.n_generaciones):
+        list_epocas.append(i+1)  
+    fig, ax = plt.subplots()
+    ax.plot(list_epocas, list_mejores_aptitud,label='Mejores Aptitud')
+    ax.plot(list_epocas, list_media_aptitud,label='Aptitud Media')
+    ax.plot(list_epocas, list_peores_aptitud, color='red',label='Peores Aptitud')
+    ax.legend(loc='lower right')
+    plt.savefig('images/evolucion_aptitud')
+    plt.show()  
 
 
 
 if __name__ == "__main__":
-    n_muebles=20
-    muebles=crear_muebles(n_muebles, 1,5,1000, 300)
+    n_muebles=15
+    muebles=crear_muebles(n_muebles, rango1=1,rango2=6, media=1000, desviacion_estandar=300)
     AG=AlgoritmoGenetico(muebles,n_individuos=n_muebles, tamanio_poblacion=20, horas_trabajo=20,n_generaciones=10,prob_mutacion=0.7,n_mutaciones=3,prob_mutacion_gen=0.7)
+    generar_grafica(AG)
