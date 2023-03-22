@@ -2,7 +2,8 @@ from helper import crear_muebles,generar_rango_cruza,llenar_resultado,arr_numero
 import random
 import matplotlib.pyplot as plt
 import numpy as np
-
+import tkinter as tk
+from Interfaz import Interfaz
 class AlgoritmoGenetico:
     def __init__(self, muebles,n_individuos, tamanio_poblacion,horas_trabajo,n_generaciones,prob_mutacion,n_mutaciones,prob_mutacion_gen):
         self.tamanio_poblacion = tamanio_poblacion
@@ -179,6 +180,8 @@ def generar_grafica(algoritmo):
     ax.plot(list_epocas, list_mejores_aptitud,label='Mejores Aptitud')
     ax.plot(list_epocas, list_media_aptitud,label='Aptitud Media')
     ax.plot(list_epocas, list_peores_aptitud, color='red',label='Peores Aptitud')
+    index=algoritmo.n_generaciones -1
+    ax.text(0.5,5050,f'Mejor individuo {algoritmo.mejor_individuo[index]}')
     ax.legend(loc='lower right')
     plt.savefig('images/evolucion_aptitud')
     plt.show()  
@@ -186,7 +189,23 @@ def generar_grafica(algoritmo):
 
 
 if __name__ == "__main__":
-    n_muebles=15
-    muebles=crear_muebles(n_muebles, rango1=1,rango2=6, media=1000, desviacion_estandar=300)
-    AG=AlgoritmoGenetico(muebles,n_individuos=n_muebles, tamanio_poblacion=20, horas_trabajo=20,n_generaciones=10,prob_mutacion=0.7,n_mutaciones=3,prob_mutacion_gen=0.7)
+    window = tk.Tk()
+    entrada= Interfaz(window)
+    n_muebles=entrada.get_n_muebles()
+#                          15            1                                  6                        1000                      300                          
+    muebles=crear_muebles(n_muebles,
+                          rango1=entrada.get_rango1(),
+                          rango2=entrada.get_rango2(), 
+                          media=entrada.get_media(), 
+                          desviacion_estandar=entrada.get_desviacion_estandar()
+                          )
+    AG=AlgoritmoGenetico(muebles,
+                        n_individuos=n_muebles, #15
+                        tamanio_poblacion= entrada.get_tamanio_poblacion(), #20 
+                        horas_trabajo=entrada.get_horas(), #20
+                        n_generaciones=entrada.get_generaciones(), #10
+                        prob_mutacion=entrada.get_prob_mutacion(), #0.7
+                        n_mutaciones=entrada.get_n_mutacion(), #2
+                        prob_mutacion_gen=entrada.get_prob_muta_gen() #0.7
+                        )
     generar_grafica(AG)
