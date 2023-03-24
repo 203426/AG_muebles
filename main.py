@@ -1,15 +1,16 @@
-from helper import crear_muebles,generar_rango_cruza,llenar_resultado,arr_numeros
+from helper import crear_muebles,generar_rango_cruza,llenar_resultado,arr_numeros,crear_pedidos
 import random
 import matplotlib.pyplot as plt
 import numpy as np
 import tkinter as tk
 from Interfaz import Interfaz
 class AlgoritmoGenetico:
-    def __init__(self, muebles,n_individuos, tamanio_poblacion,horas_trabajo,n_generaciones,prob_mutacion,n_mutaciones,prob_mutacion_gen):
+    def __init__(self, muebles,inventario,pedidos,n_individuos, tamanio_poblacion,n_generaciones,prob_mutacion,n_mutaciones,prob_mutacion_gen):
         self.tamanio_poblacion = tamanio_poblacion
         self.n_individuos = n_individuos
-        self.horas_trabajo = horas_trabajo
         self.muebles = muebles
+        self.inventario = inventario
+        self.pedidos = pedidos
         self.n_generaciones = n_generaciones
         self.poblacion=[]
         self.mejor_individuo=[]
@@ -24,13 +25,13 @@ class AlgoritmoGenetico:
         self.bucle_algoritmo()
     def primera_genetica(self):
         individuo_aux=[]
-        for mueble in self.muebles:
-            individuo_aux.append(mueble.id)
+        for pedido in self.pedidos:
+            individuo_aux.append(pedido.get('id'))
         for _ in range(self.tamanio_poblacion):
             random.shuffle(individuo_aux)
             individuo = individuo_aux.copy()
             self.poblacion.append(self.crear_individuo(individuo))
-
+        print(*self.poblacion,sep='\n')
     def bucle_algoritmo(self):
         aux = 0
         while (aux < self.n_generaciones):
@@ -123,27 +124,55 @@ class AlgoritmoGenetico:
     def agregar_aptitud(self, individuo):
         return self.calcular_data(individuo.get('data'))
     def ordenar_poblacion_por_aptitud(self):
-        self.poblacion.sort(key=lambda aptitud: aptitud['aptitud'], reverse=True)
+        self.poblacion.sort(key=lambda aptitud: aptitud['ganancia'], reverse=True)
     def crear_data(self, data):
         return {'data':data}
     def calcular_data(self, data):
-        horas=0
-        aux=0
+        pedidos_de_individuo=[]
         ganancia=0
-        muebles=0
+        #Encuentro los los pedidos en orden del individuo
         for gen in data:
-            if aux <= self.horas_trabajo:
-                muebles +=1
-                aux += self.muebles[gen-1].tiempo
-        for x in range(muebles-1):
-            ganancia += self.muebles[data[x]-1].precio
-            horas += self.muebles[data[x]-1].tiempo
-            
-        aptitud= self.calcular_aptitud(ganancia, horas)
-        return {'data':data, 'aptitud':aptitud,'ganancia':round(ganancia,2),'horas':horas, 'muebles':muebles-1}
-        # return {'data':data, 'aptitud':aptitud,'ganancia':round(ganancia,2),'horas':horas}
-    def calcular_aptitud(self, ganancia, horas):
-        return round( ganancia - (self.penalizacion*(self.horas_trabajo-horas)),2)
+            pedido=list(pedido for pedido in self.pedidos if pedido['id']  == gen)[0]
+            pedidos_de_individuo.append(pedido)
+
+        inventario_copy=list(self.inventario.values()).copy()
+        band=False
+        #Itero cada pedido para realizar el decremento de material en inventario
+        muebles=0
+        arr_a_restar=[]
+        for i,pedido in enumerate(pedidos_de_individuo):
+            arr_pedido=list(pedido.values()) # Genero un arreglo con [id_pedido, cantidad_de_mueble, nombre_mueble]
+            mueble=list(mueble for mueble in self.muebles if mueble.nombre == arr_pedido[2])[0] #Traigo el mueble del pedido
+            arr_aux=mueble.get_material() #Obtengo los material que usa para crear el mueble
+            arr_material=[]
+            #Se multiplica cantidad de productos * c/componente de fabricacion
+            for cantidad in arr_aux:
+                arr_material.append(arr_pedido[1]*cantidad) #El resultado es un arreglo con todo el material usado para entregar el pedido
+            arr_a_restar.append(arr_material)
+            #Se evalua si se puede cumplir el pedido
+            for index,cantidad in enumerate(arr_material):
+                resta=inventario_copy[index]-cantidad
+                if  resta<0:
+                    band=True                    
+                else:
+                    inventario_copy[index]=resta
+            if band==False:
+                muebles+=1
+                ganancia+=mueble.precio
+            else:
+                inventario=self.calcular_inventario(arr_a_restar)
+                break
+        return {'data':data,'ganancia':ganancia, 'muebles':muebles, 'inventario':inventario}
+        # return {'data':data,'ganancia':ganancia, 'muebles':muebles, 'inventario':inventario, 'componentes':arr_a_restar}
+
+    def calcular_inventario(self, arr_a_restar):
+        arr_a_restar.pop()
+        inventario_copy2=list(self.inventario.values()).copy()
+        for arr in arr_a_restar:
+            for index,dato in enumerate(arr):
+                inventario_copy2[index]=inventario_copy2[index]-dato
+        return inventario_copy2
+
     def crear_individuo(self,individuo_data):
         data= self.calcular_data(individuo_data)
         individuo = data
@@ -154,11 +183,11 @@ class AlgoritmoGenetico:
         arr_y=[]
         for index,individuo in enumerate(self.poblacion):
             arr_x.append(index+1)
-            arr_y.append(individuo['aptitud'])
-        plt.stem(arr_x,arr_y,label='Aptitud')
+            arr_y.append(individuo['ganancia'])
+        plt.stem(arr_x,arr_y,label='Ganancia')
         aux.set_title(f'Individuos en generacion: {n_generacion}',fontdict={'fontsize':20,'fontweight':'bold'})
         aux.set_xlabel('Individuo',fontdict={'fontsize':15,'fontweight':'bold', 'color':'tab:red'})
-        aux.set_ylabel('Aptitud',fontdict={'fontsize':15,'fontweight':'bold', 'color':'tab:blue'})
+        aux.set_ylabel('Ganancia',fontdict={'fontsize':15,'fontweight':'bold', 'color':'tab:blue'})
         aux.legend(loc='upper right',prop={'size':10})
         # plt.grid()
         plt.savefig(f'./images/generacion_{self.generacion}')
@@ -169,19 +198,19 @@ def generar_grafica(algoritmo):
     list_peores_aptitud = []
     list_media_aptitud=[]
     for x in algoritmo.media_individuo:
-        list_media_aptitud.append(x.get('aptitud'))
+        list_media_aptitud.append(x.get('ganancia'))
     for k in algoritmo.mejor_individuo:
-        list_mejores_aptitud.append(k.get('aptitud'))
+        list_mejores_aptitud.append(k.get('ganancia'))
     for j in algoritmo.peor_individuo:
-        list_peores_aptitud.append(j.get('aptitud'))
+        list_peores_aptitud.append(j.get('ganancia'))
     for i in range(algoritmo.n_generaciones):
         list_epocas.append(i+1)  
     fig, ax = plt.subplots()
     ax.plot(list_epocas, list_mejores_aptitud,label='Mejores Aptitud')
     ax.plot(list_epocas, list_media_aptitud,label='Aptitud Media')
     ax.plot(list_epocas, list_peores_aptitud, color='red',label='Peores Aptitud')
-    index=algoritmo.n_generaciones -1
-    ax.text(0.5,5050,f'Mejor individuo {algoritmo.mejor_individuo[index]}')
+    # index=algoritmo.n_generaciones -1
+    # ax.text(0.5,5050,f'Mejor individuo {algoritmo.mejor_individuo[index]}')
     ax.legend(loc='lower right')
     plt.savefig('images/evolucion_aptitud')
     plt.show()  
@@ -191,21 +220,24 @@ def generar_grafica(algoritmo):
 if __name__ == "__main__":
     window = tk.Tk()
     entrada= Interfaz(window)
-    n_muebles=entrada.get_n_muebles()
 #                          15            1                                  6                        1000                      300                          
-    muebles=crear_muebles(n_muebles,
-                          rango1=entrada.get_rango1(),
-                          rango2=entrada.get_rango2(), 
-                          media=entrada.get_media(), 
-                          desviacion_estandar=entrada.get_desviacion_estandar()
-                          )
+    muebles=crear_muebles()
+    pedidos=crear_pedidos(20,muebles,5,15)
+    inventario={'pata_silla_delantera':200,'pata_silla_trasera':200,'pata_mesa':400,'refuerzos':400,'tornillos':600,'respaldos':50,'asientos':50,'tablas':100,'tuercas':600}
+
     AG=AlgoritmoGenetico(muebles,
-                        n_individuos=n_muebles, #15
-                        tamanio_poblacion= entrada.get_tamanio_poblacion(), #20 
-                        horas_trabajo=entrada.get_horas(), #20
+                        n_individuos=len(pedidos), #15
+                        pedidos=pedidos,
+                        inventario=inventario,
+                        tamanio_poblacion= entrada.get_tamanio_pob(), #20 
                         n_generaciones=entrada.get_generaciones(), #10
                         prob_mutacion=entrada.get_prob_mutacion(), #0.7
                         n_mutaciones=entrada.get_n_mutacion(), #2
                         prob_mutacion_gen=entrada.get_prob_muta_gen() #0.7
+                        # tamanio_poblacion= 20 ,
+                        # n_generaciones=10,
+                        # prob_mutacion=0.7,
+                        # n_mutaciones= 2,
+                        # prob_mutacion_gen= 0.7
                         )
     generar_grafica(AG)
