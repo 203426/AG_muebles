@@ -56,7 +56,7 @@ class AlgoritmoGenetico:
         sheet.cell(row=len(mejor_individuo['data'])+3, column=3, value='Inventario')
         sheet.cell(row=len(mejor_individuo['data'])+3, column=4, value='Inicial')
         for index,value in enumerate(mejor_individuo['inventario']):
-            sheet.cell(row=len(mejor_individuo['data'])+3, column=index+5, value=value)
+            sheet.cell(row=len(mejor_individuo['data'])+3, column=index+6, value=value)
         sheet.cell(row=len(mejor_individuo['data'])+4, column=3, value='Inventario')
         sheet.cell(row=len(mejor_individuo['data'])+4, column=4, value='Final')
 
@@ -260,8 +260,8 @@ def generar_grafica(algoritmo):
 
 
 if __name__ == "__main__":
-    # window = tk.Tk()
-    # entrada= Interfaz(window)
+    window = tk.Tk()
+    entrada= Interfaz(window)
 #                          15            1                                  6                        1000                      300                          
     muebles=crear_muebles()
     # pedidos=crear_pedidos(7,muebles,5,15)
@@ -272,15 +272,15 @@ if __name__ == "__main__":
                         n_individuos=len(pedidos), #15
                         pedidos=pedidos,
                         inventario=inventario,
-                        # tamanio_poblacion= entrada.get_tamanio_pob(), #20 
-                        # n_generaciones=entrada.get_generaciones(), #10
-                        # prob_mutacion=entrada.get_prob_mutacion(), #0.7
-                        # n_mutaciones=entrada.get_n_mutacion(), #2
-                        # prob_mutacion_gen=entrada.get_prob_muta_gen() #0.7
-                        tamanio_poblacion= 20 ,
-                        n_generaciones=20,
-                        prob_mutacion=0.7,
-                        n_mutaciones= 2,
-                        prob_mutacion_gen= 0.7
+                        tamanio_poblacion= entrada.get_tamanio_pob(), #20 
+                        n_generaciones=entrada.get_generaciones(), #10
+                        prob_mutacion=entrada.get_prob_mutacion(), #0.7
+                        n_mutaciones=entrada.get_n_mutacion(), #2
+                        prob_mutacion_gen=entrada.get_prob_muta_gen() #0.7
+                        # tamanio_poblacion= 10 ,
+                        # n_generaciones=20,
+                        # prob_mutacion=0.7,
+                        # n_mutaciones= 4,
+                        # prob_mutacion_gen= 0.7
                         )
     generar_grafica(AG)
