@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tkinter as tk
 from Interfaz import Interfaz
+from openpyxl import Workbook
+
 class AlgoritmoGenetico:
     def __init__(self, muebles,inventario,pedidos,n_individuos, tamanio_poblacion,n_generaciones,prob_mutacion,n_mutaciones,prob_mutacion_gen):
         self.tamanio_poblacion = tamanio_poblacion
@@ -23,6 +25,45 @@ class AlgoritmoGenetico:
         self.penalizacion=100
         self.primera_genetica()
         self.bucle_algoritmo()
+        self.generar_tabla()
+    
+    def generar_tabla(self):
+        labels=['id','Mueble','Precio','Cantidad','Pata silla delantera','Pata silla trasera','Pata mesa','Refuerzos','Tornillos','Respaldos','Asientos','Tablas','Tuercas','Ganancia del pedido']
+        wb = Workbook()
+        sheet=wb.active
+        for index,dato in enumerate(labels):
+            sheet.cell(row=1, column=index+1, value=dato)
+        mejor_individuo=self.mejor_individuo[-1]
+        print(f'Individuo: \n{mejor_individuo}')
+        for index,id in enumerate(mejor_individuo['data']):
+            pedido=list(pedido for pedido in self.pedidos if pedido['id']  == id)[0]
+            mueble=list(mueble for mueble in self.muebles if mueble.nombre == pedido['mueble'])[0]
+            sheet.cell(row=index+2, column=1, value=id)
+            sheet.cell(row=index+2, column=2, value=mueble.nombre)
+            sheet.cell(row=index+2, column=3, value=mueble.precio)
+            sheet.cell(row=index+2, column=4, value=pedido['cantidad'])
+            sheet.cell(row=index+2, column=14, value=pedido['ganancia'])
+        sheet.cell(row=len(mejor_individuo['data'])+2, column=14, value='Total:')
+        sheet.cell(row=len(mejor_individuo['data'])+3, column=14, value=mejor_individuo['ganancia'])
+        for index,arr in enumerate(mejor_individuo['componentes']):
+            for j,value in enumerate(arr):
+                sheet.cell(row=index+2, column=j+5, value=value)
+        for index,value in enumerate(self.inventario.values()):
+            sheet.cell(row=len(mejor_individuo['data'])+2, column=index+5, value=value)
+        for index in range(14):
+            sheet.cell(row=len(mejor_individuo['data'])+2, column=index+1, value='----------------')
+            
+        sheet.cell(row=len(mejor_individuo['data'])+3, column=3, value='Inventario')
+        sheet.cell(row=len(mejor_individuo['data'])+3, column=4, value='Inicial')
+        for index,value in enumerate(mejor_individuo['inventario']):
+            sheet.cell(row=len(mejor_individuo['data'])+3, column=index+5, value=value)
+        sheet.cell(row=len(mejor_individuo['data'])+4, column=3, value='Inventario')
+        sheet.cell(row=len(mejor_individuo['data'])+4, column=4, value='Final')
+
+        
+
+        wb.save('Tabla_mejor_individuo.xlsx')
+    
     def primera_genetica(self):
         individuo_aux=[]
         for pedido in self.pedidos:
@@ -158,12 +199,12 @@ class AlgoritmoGenetico:
                     inventario_copy[index]=resta
             if band==False:
                 muebles+=1
-                ganancia+=mueble.precio
+                ganancia+=pedido['ganancia']
             else:
                 inventario=self.calcular_inventario(arr_a_restar)
                 break
-        return {'data':data,'ganancia':ganancia, 'muebles':muebles, 'inventario':inventario}
-        # return {'data':data,'ganancia':ganancia, 'muebles':muebles, 'inventario':inventario, 'componentes':arr_a_restar}
+        # return {'data':data,'ganancia':ganancia, 'muebles':muebles, 'inventario':inventario}
+        return {'data':data,'ganancia':ganancia, 'muebles':muebles, 'inventario':inventario, 'componentes':arr_a_restar}
 
     def calcular_inventario(self, arr_a_restar):
         arr_a_restar.pop()
@@ -193,6 +234,7 @@ class AlgoritmoGenetico:
         plt.savefig(f'./images/generacion_{self.generacion}')
         plt.close()
 def generar_grafica(algoritmo):
+
     list_epocas = []
     list_mejores_aptitud = []
     list_peores_aptitud = []
@@ -218,26 +260,27 @@ def generar_grafica(algoritmo):
 
 
 if __name__ == "__main__":
-    window = tk.Tk()
-    entrada= Interfaz(window)
+    # window = tk.Tk()
+    # entrada= Interfaz(window)
 #                          15            1                                  6                        1000                      300                          
     muebles=crear_muebles()
-    pedidos=crear_pedidos(20,muebles,5,15)
+    # pedidos=crear_pedidos(7,muebles,5,15)
+    pedidos=crear_pedidos(30,muebles,5,15)
     inventario={'pata_silla_delantera':200,'pata_silla_trasera':200,'pata_mesa':400,'refuerzos':400,'tornillos':600,'respaldos':50,'asientos':50,'tablas':100,'tuercas':600}
 
     AG=AlgoritmoGenetico(muebles,
                         n_individuos=len(pedidos), #15
                         pedidos=pedidos,
                         inventario=inventario,
-                        tamanio_poblacion= entrada.get_tamanio_pob(), #20 
-                        n_generaciones=entrada.get_generaciones(), #10
-                        prob_mutacion=entrada.get_prob_mutacion(), #0.7
-                        n_mutaciones=entrada.get_n_mutacion(), #2
-                        prob_mutacion_gen=entrada.get_prob_muta_gen() #0.7
-                        # tamanio_poblacion= 20 ,
-                        # n_generaciones=10,
-                        # prob_mutacion=0.7,
-                        # n_mutaciones= 2,
-                        # prob_mutacion_gen= 0.7
+                        # tamanio_poblacion= entrada.get_tamanio_pob(), #20 
+                        # n_generaciones=entrada.get_generaciones(), #10
+                        # prob_mutacion=entrada.get_prob_mutacion(), #0.7
+                        # n_mutaciones=entrada.get_n_mutacion(), #2
+                        # prob_mutacion_gen=entrada.get_prob_muta_gen() #0.7
+                        tamanio_poblacion= 20 ,
+                        n_generaciones=20,
+                        prob_mutacion=0.7,
+                        n_mutaciones= 2,
+                        prob_mutacion_gen= 0.7
                         )
     generar_grafica(AG)

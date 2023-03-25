@@ -22,8 +22,9 @@ def crear_pedidos(n_pedidos,muebles ,rango1,rango2):
     pedidos=[]
     for x in range(n_pedidos):
         cantidad=round(random.uniform(rango1,rango2))
-        mueble=random.choice(muebles).nombre
-        pedidos.append({'id':x+1,'cantidad':cantidad,'mueble':mueble})
+        mueble=random.choice(muebles)
+        ganancia=mueble.precio*cantidad
+        pedidos.append({'id':x+1,'cantidad':cantidad,'mueble':mueble.nombre,'ganancia':ganancia})
     return pedidos
 def generar_rango_cruza(cant_genes):
     # se crea el rango a evaluar en individuo1 y While para que a y b no sean iguales

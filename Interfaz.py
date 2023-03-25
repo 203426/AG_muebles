@@ -25,7 +25,7 @@ class Interfaz:
 
         self.label3=tk.Label(self.wind,text="Ingresa el tamaño de la población :")
         self.label3.grid(column=0, row=5)
-        self.tamanio_pob=tk.IntVar(value=20)
+        self.tamanio_pob=tk.IntVar(value=10)
 
         self.entry3=tk.Entry(self.wind, width=20, textvariable=self.tamanio_pob)
         self.entry3.grid(column=0, row=6)
